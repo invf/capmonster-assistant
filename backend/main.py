@@ -1,34 +1,41 @@
-import os, time, base64, requests
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, Form
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
-
-load_dotenv(".env.backend")
-API_KEY = os.getenv("CAPMONSTER_API_KEY")
+import aiohttp, json
 
 app = FastAPI()
+
+# Allowing the frontend to access the backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-@app.get("/health")
-def health():
-    return {"ok": True}
+CAP_URL = "https://api.capmonster.cloud/getBalance"
 
-@app.post("/solve")
-async def solve(file: UploadFile = File(...)):
-    body = base64.b64encode(await file.read()).decode()
-    task = {"clientKey": API_KEY, "task": {"type": "ImageToTextTask", "body": body}}
-    create = requests.post("https://api.capmonster.cloud/createTask", json=task).json()
-    task_id = create.get("taskId")
+@app.post("/get_balance")
+async def get_balance(clientKey: str = Form(...)):
+    """
+    Accepts API key, makes a request to CapMonster, returns balance.
+    """
+    async with aiohttp.ClientSession() as session:
+        async with session.post(CAP_URL, json={"clientKey": clientKey}) as resp:
+            text = await resp.text()
+            try:
+                # first we try to parse plain JSON
+                data = await resp.json()
+            except Exception:
+                try:
+                    # if CapMonster returned JSON as a string — let's parse it again
+                    data = json.loads(text)
+                except Exception:
+                    # if it didn't work at all — we return the raw text
+                    data = {"error": "Unexpected response", "raw": text, "status": resp.status}
+    return data
 
-    # опитування результату
-    while True:
-        res = requests.post(
-            "https://api.capmonster.cloud/getTaskResult",
-            json={"clientKey": API_KEY, "taskId": task_id}
-        ).json()
-        if res.get("status") == "ready":
-            return {"status": "ready", "solution": {"type": "image", "text": res["solution"]["text"]}}
-        time.sleep(2)
+
+@app.get("/ping")
+async def ping():
+    return {"status": "ok"}

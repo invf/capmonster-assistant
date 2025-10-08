@@ -1,0 +1,18 @@
+[
+  {"name": "RecaptchaV2Task", "price": 0.0006, "gif": "gifs/recaptcha_v2.gif", "docs": "https://docs.capmonster.cloud/docs/captchas/no-captcha-task/"},
+  {"name": "RecaptchaV3TaskProxyless", "price": 0.0009, "gif": "gifs/recaptcha_v3.gif", "docs": "https://docs.capmonster.cloud/docs/captchas/recaptcha-v3-task/"},
+  {"name": "RecaptchaV2EnterpriseTask", "price": 0.001, "gif": "gifs/recaptcha_enterprise.gif", "docs": "https://docs.capmonster.cloud/docs/captchas/recaptcha-v2-enterprise"},
+  {"name": "GeeTestTask", "price": 0.0012, "gif": "gifs/GeeTestTask.gif", "docs": "https://docs.capmonster.cloud/docs/captchas/geetest-task/"},
+  {"name": "TurnstileTask", "price": 0.0013, "gif": "gifs/TurnstileTask.gif", "docs": "https://docs.capmonster.cloud/docs/captchas/turnstile-task/"},
+  {"name": "DataDome", "price": 0.0022, "gif": "gifs/datadome.png", "docs": "https://docs.capmonster.cloud/docs/captchas/datadome/"},
+  {"name": "Tencent", "price": 0.0016, "gif": "gifs/Tencent.png", "docs": "https://docs.capmonster.cloud/docs/captchas/tendi/"},
+  {"name": "AmazonTask", "price": 0.0014, "gif": "gifs/amazon.png", "docs": "https://docs.capmonster.cloud/docs/captchas/amazon-task/"},
+  {"name": "Basilisk", "price": 0.001, "gif": "gifs/basilisk.png", "docs": "https://docs.capmonster.cloud/ru/docs/captchas/Basilisk-task/"},
+  {"name": "Imperva", "price": 0.002, "gif": "gifs/imperva.png", "docs": "https://docs.capmonster.cloud/docs/captchas/incapsula/"},
+  {"name": "Prosopo", "price": 0.0013, "gif": "gifs/prosopo.png", "docs": "https://docs.capmonster.cloud/docs/captchas/prosopo-task/"},
+  {"name": "ImageToText", "price": 0.0003, "gif": "gifs/image_to_text.webp", "docs": "https://capmonster.cloud/en/textcaptcha"},      
+  {"name": "Temu", "price": 0.002, "gif": "gifs/temu.png", "docs": "https://docs.capmonster.cloud/docs/captchas/temu-task/"},
+  {"name": "Yidun", "price": 0.001, "gif": "gifs/yidun.png", "docs": "https://docs.capmonster.cloud/docs/captchas/yidun-task/"},
+  {"name": "MTCaptcha", "price": 0.0015, "gif": "gifs/mtcaptcha.png", "docs": "https://docs.capmonster.cloud/docs/captchas/mtcaptcha-task/"},
+  {"name": "Altcha", "price": 0.0008, "gif": "gifs/altcha.png", "docs": "https://docs.capmonster.cloud/docs/captchas/altcha-task/"}
+]
