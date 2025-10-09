@@ -82,6 +82,20 @@ button:hover { opacity: 0.9; }
   color: var(--tg-theme-button-color, var(--accent));
   margin: 0 0 10px 0;
 }
+.card div {
+  color: var(--tg-theme-hint-color, #a0b0c0);
+  font-size: 0.9em;
+  margin-top: 4px;
+}
+
+/* 🔧 спеціально для рядка “at $0.0004 per solve” */
+.card .price-line {
+  color: var(--tg-theme-subtitle-text-color, #b0c4de);
+  font-weight: 500;
+  font-size: 0.88em;
+  text-shadow: 0 0 4px rgba(0,0,0,0.3); /* ✅ робить помітним у світлих темах */
+}
+
 .value { font-size: 20px; font-weight: bold; color: #80ffea; margin: 10px 0; }
 .btns { margin-top: 10px; display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
 .btn {
@@ -277,7 +291,7 @@ function renderDashboard(balance){
    <div class="card">
     <h3>${c.name}</h3>
     <div class="value">${solves.toLocaleString()} solves</div>
-    <div>at $${c.price.toFixed(4)} per solve</div>
+    <div class="price-line">at $${c.price.toFixed(4)} per solve</div>
     <div class="btns">
       <a href="#" class="btn demo" onclick="openDemo('${c.name}','${c.gif}')">🧩 Demo</a>
       <a class="btn docs" href="${c.docs}" target="_blank">📘 Docs</a>
