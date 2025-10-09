@@ -1,96 +1,131 @@
 import os
 import aiohttp
 import asyncio
-import requests
 from aiogram import Bot, Dispatcher, types
-from aiogram.filters import Command
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.filters import CommandStart
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from dotenv import load_dotenv
 
 load_dotenv()
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
-CAPMONSTER_KEY = os.getenv("CAPMONSTER_API_KEY")
+
+BOT_TOKEN = os.getenv("BOT_TOKEN") or "ТВОЙ_ТОКЕН_БОТА"
+CAP_KEY = os.getenv("CAPMONSTER_API_KEY") or None
+CAP_URL = "https://api.capmonster.cloud"
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# --- Команда /start ---
-@dp.message(Command("start"))
-async def start(msg: types.Message):
-    kb = InlineKeyboardBuilder()
-    kb.button(text="🧩 Samples", callback_data="samples")
-    kb.button(text="💰 Balance", callback_data="balance")
-    await msg.answer(
-        "👋 Привіт! Надішли мені фото капчі, і я розпізнаю її через CapMonsterCloud.\n"
-        "Або вибери дію нижче 👇",
-        reply_markup=kb.as_markup()
+# --- Меню капч ---
+captcha_types = {
+    "recaptchav2": "🧠 Recaptcha V2",
+    "binance": "🪙 Binance Captcha",
+    "altcha": "⚙️ Altcha Captcha",
+    "image2text": "📷 Image to Text",
+    "datadome": "🧩 DataDome Slider"
+}
+
+def get_keyboard():
+    buttons = [
+        [InlineKeyboardButton(text=name, callback_data=key)]
+        for key, name in captcha_types.items()
+    ]
+    buttons.append([InlineKeyboardButton(text="🔁 Check All", callback_data="check_all")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+# --- Функція тестування капчі ---
+async def test_captcha(session, captcha_type: str, client_key: str):
+    payload = {"clientKey": client_key, "task": {}}
+
+    if captcha_type == "recaptchav2":
+        payload["task"] = {
+            "type": "RecaptchaV2TaskProxyless",
+            "websiteURL": "https://www.google.com/recaptcha/api2/demo",
+            "websiteKey": "6Lf09xMUAAAAAKkM6KZtA_j4Qoe6OZ1zY2ZC7jG8"
+        }
+    elif captcha_type == "binance":
+        payload["task"] = {"type": "BinanceTask", "websiteURL": "https://www.binance.com"}
+    elif captcha_type == "altcha":
+        payload["task"] = {
+            "type": "AltchaTaskProxyless",
+            "websiteURL": "https://altcha.org/demo/",
+            "challengeScript": "https://altcha.org/captcha.js"
+        }
+    elif captcha_type == "image2text":
+        payload["task"] = {
+            "type": "ImageToTextTask",
+            "body": "iVBOR..."  # короткий приклад зображення в base64
+        }
+    elif captcha_type == "datadome":
+        payload["task"] = {"type": "DataDomeSliderTask", "websiteURL": "https://datadome.co/"}
+    else:
+        return "❌ Unsupported captcha type."
+
+    # створення задачі
+    async with session.post(f"{CAP_URL}/createTask", json=payload) as resp:
+        data = await resp.json()
+        if data.get("errorId") != 0:
+            return f"❌ Error creating task: {data}"
+        task_id = data["taskId"]
+
+    # перевіряємо результат
+    for _ in range(25):
+        await asyncio.sleep(2)
+        async with session.post(f"{CAP_URL}/getTaskResult", json={"clientKey": client_key, "taskId": task_id}) as r:
+            res = await r.json()
+            if res.get("status") == "ready":
+                return f"✅ {captcha_types.get(captcha_type)} solved!\n<code>{res['solution']}</code>"
+    return f"⚠️ Timeout for {captcha_types.get(captcha_type)}"
+
+# --- Обробники ---
+user_keys = {}  # {user_id: api_key}
+
+@dp.message(CommandStart())
+async def start(message: types.Message):
+    await message.answer(
+        "👋 Welcome to CapMonster Validator!\n\n"
+        "Send me your API key first to begin testing.",
+        reply_markup=None
     )
 
-# --- Callback кнопки ---
-@dp.callback_query()
-async def callbacks(call: types.CallbackQuery):
-    if call.data == "balance":
-        r = requests.post("https://api.capmonster.cloud/getBalance", json={"clientKey": CAPMONSTER_KEY})
-        data = r.json()
-        if data.get("errorId") == 0:
-            await call.message.answer(f"💰 Баланс CapMonsterCloud: {data['balance']} USD")
-        else:
-            await call.message.answer(f"⚠️ Помилка: {data}")
-    elif call.data == "samples":
-        kb = InlineKeyboardBuilder()
-        kb.button(text="📷 Image sample", callback_data="sample_image")
-        kb.button(text="🌐 reCAPTCHA demo", url="https://www.google.com/recaptcha/api2/demo")
-        kb.button(text="🌐 hCaptcha demo", url="https://accounts.hcaptcha.com/demo")
-        kb.button(text="🌐 GeeTest demo", url="https://demos.geetest.com/sensebot")
-        await call.message.answer("🔗 Ось тестові капчі:", reply_markup=kb.as_markup())
-    elif call.data == "sample_image":
-        await call.message.answer_photo(
-            "https://raw.githubusercontent.com/openai/openai-cookbook/main/examples/data/captcha_sample.png",
-            caption="📸 Надішли подібну капчу — я спробую її розпізнати!"
-        )
-
-# --- Основний обробник зображень ---
 @dp.message()
-async def solve_captcha(msg: types.Message):
-    if not msg.photo:
-        return await msg.answer("📸 Надішли саме зображення капчі.")
-    
-    file_id = msg.photo[-1].file_id
-    file = await bot.get_file(file_id)
-    photo = await bot.download_file(file.file_path)
+async def handle_message(message: types.Message):
+    text = message.text.strip()
+    user_id = message.from_user.id
 
-    form = aiohttp.FormData()
-    form.add_field("file", photo, filename="captcha.jpg")
+    # якщо користувач ще не встановив ключ
+    if not user_id in user_keys:
+        user_keys[user_id] = text
+        await message.answer("✅ API key saved! Now choose captcha type:", reply_markup=get_keyboard())
+        return
 
-    progress_msg = await msg.answer("🌀 Розпочинаю розгадування... 0%")
-    progress = 0
+    await message.answer("Send /start to reset or use the menu below.", reply_markup=get_keyboard())
 
-    try:
-        async with aiohttp.ClientSession() as session:
-            # Створюємо запит до бекенду /solve_progress
-            async with session.post(f"{BACKEND_URL}/solve_progress", data=form) as resp:
-                # Імітуємо процес — поступово оновлюємо % під час очікування
-                for i in range(1, 6):
-                    progress += 20
-                    await progress_msg.edit_text(f"🤔 Розгадую... {progress}%")
-                    await asyncio.sleep(1)
-                
-                data = await resp.json()
+@dp.callback_query()
+async def handle_callback(query: types.CallbackQuery):
+    user_id = query.from_user.id
+    if user_id not in user_keys:
+        await query.message.answer("⚠️ Please send your API key first.")
+        return
 
-                if data.get("status") == "ready":
-                    text = data["solution"]["text"]
-                    await progress_msg.edit_text(f"✅ Розпізнано: `{text}`", parse_mode="Markdown")
-                elif data.get("status") == "timeout":
-                    await progress_msg.edit_text("⚠️ Не вдалося розпізнати (timeout).")
-                else:
-                    await progress_msg.edit_text(f"❌ Помилка: {data}")
-    except Exception as e:
-        await progress_msg.edit_text(f"❌ Помилка: {e}")
+    client_key = user_keys[user_id]
+    captcha_type = query.data
+    await query.message.edit_text(f"🔍 Testing {captcha_type}...", parse_mode="HTML")
+
+    async with aiohttp.ClientSession() as session:
+        if captcha_type == "check_all":
+            results = []
+            for key in captcha_types.keys():
+                res = await test_captcha(session, key, client_key)
+                results.append(res)
+            text = "\n\n".join(results)
+        else:
+            text = await test_captcha(session, captcha_type, client_key)
+
+    await query.message.edit_text(text, parse_mode="HTML", reply_markup=get_keyboard())
 
 # --- Запуск ---
 async def main():
-    print("🤖 Bot started and waiting for captchas...")
+    print("🤖 CapMonster Validator Bot started")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

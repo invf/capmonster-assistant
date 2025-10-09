@@ -1,7 +1,7 @@
 [
   {"name": "RecaptchaV2Task", "price": 0.0006, "gif": "gifs/recaptcha_v2.gif", "docs": "https://docs.capmonster.cloud/docs/captchas/no-captcha-task/"},
   {"name": "RecaptchaV3TaskProxyless", "price": 0.0009, "gif": "gifs/recaptcha_v3.gif", "docs": "https://docs.capmonster.cloud/docs/captchas/recaptcha-v3-task/"},
-  {"name": "RecaptchaV2EnterpriseTask", "price": 0.001, "gif": "gifs/recaptcha_enterprise.gif", "docs": "https://docs.capmonster.cloud/docs/captchas/recaptcha-v2-enterprise"},
+  {"name": "RecaptchaV2EnterpriseTask", "price": 0.001, "gif": "gifs/recaptcha_enterprise.gif", "docs": "https://docs.capmonster.cloud/docs/captchas/recaptcha-v2-enterprise-task"},
   {"name": "GeeTestTask", "price": 0.0012, "gif": "gifs/GeeTestTask.gif", "docs": "https://docs.capmonster.cloud/docs/captchas/geetest-task/"},
   {"name": "TurnstileTask", "price": 0.0013, "gif": "gifs/TurnstileTask.gif", "docs": "https://docs.capmonster.cloud/docs/captchas/turnstile-task/"},
   {"name": "DataDome", "price": 0.0022, "gif": "gifs/datadome.png", "docs": "https://docs.capmonster.cloud/docs/captchas/datadome/"},
