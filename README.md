@@ -133,7 +133,4 @@ Learn more at 👉 [https://capmonster.cloud](https://capmonster.cloud)
 Developed by [invf](https://github.com/invf)
 🔗 Web version: [capmonster-assistant.vercel.app](https://capmonster-assistant.vercel.app/)
 
-```
-
----
 
